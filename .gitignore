@@ -1,0 +1,10 @@
+# Linux
+*~
+# Vim
+*.swo
+*.swp
+# Python
+*.pyc
+__pycache__
+*.so
+.env
