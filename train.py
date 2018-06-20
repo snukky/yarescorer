@@ -7,31 +7,33 @@ import argparse
 
 FEATURE_FIELD = 2
 
+FILTERS = {
+    'none': "",
+    'default': r"sed -ur -e 's/^( *)(.)/\1\u\2/' -e 's/@@ //g'",
+    'debpe': r"sed -ur -e 's/@@ //g'",
+    'ape': r"sed -ur -e 's/<step>//g' -e 's/^( *)(.)/\1\u\2/' -e 's/@@ //g' -e 's/  / /g'",
+}
+
 METRICS = {
     'bleu': {
         'sctype': 'BLEU',
         'scconfig': 'case:true',
-        'filter': r"sed -ur -e 's/^( *)(.)/\1\u\2/' -e 's/@@ //g'",
     },
     'bleu-lc': {
         'sctype': 'BLEU',
         'scconfig': 'case:false',
-        'filter': r"sed -ur -e 's/@@ //g'",
     },
     'm2': {
         'sctype': 'M2SCORER',
         'scconfig': 'truecase:false,beta:0.5,max_unchanged_words:2,case:false',
-        'filter': r"sed -ur -e 's/^( *)(.)/\1\u\2/' -e 's/@@ //g'",
     },
     'gleu': {
         'sctype': 'GLEU',
         'scconfig': 'lowercase:1,numrefs:4,smooth:1,debug:0',
-        'filter': r"sed -ur -e 's/^( *)(.)/\1\u\2/' -e 's/@@ //g'",
     },
     'ter': {
         'sctype': 'TER',
         'scconfig': 'case:true',
-        'filter': r"sed -ur -e 's/^( *)(.)/\1\u\2/' -e 's/@@ //g'",
     },
 }
 
@@ -48,6 +50,7 @@ def main():
         os.mkdir(args.work_dir)
 
     # Read sparse features
+    sparse_feats = {}
     if args.sparse:
         sparse_feats = read_ini_features(args.sparse)
 
@@ -63,7 +66,7 @@ def main():
         '--scconfig', metric['scconfig'],
         '--scfile',   os.path.join(args.work_dir, 'scores.dat'),
         '--ffile',    os.path.join(args.work_dir, 'features.dat'),
-        '--filter',   metric['filter'],
+        '--filter',   FILTERS[args.filter],
         '-r',         args.reference,
         '-n',         args.nbest
     ]
@@ -196,14 +199,22 @@ def parse_user_args():
                         help='n-best list augmented with new features')
     parser.add_argument('-r', '--reference', metavar='FILE',
                         help='reference', required=True)
+
     parser.add_argument('-w', '--work-dir', metavar='DIR', default='workdir',
                         help='optimizer working directory, default: %(default)s')
     parser.add_argument('-b', '--bin-dir', metavar='DIR', required=True,
-                        help='directory containing kbmira, evaluator executables')
+                        help='directory containing kbmira and evaluator executables')
+    parser.add_argument('--script-dir', metavar='DIR',
+                        help='directory containing Moses scripts')
+
     parser.add_argument('-i', '--iterations', metavar='N', default=300, type=int,
                         help='number of optimizer iterations, default: %(default)s')
-    parser.add_argument('-m', '--metric', default='bleu', choices=METRICS.keys(),
+    parser.add_argument('-m', '--metric', default='bleu', metavar='METRIC',
+                        choices=METRICS.keys(),
                         help='tuning metric, default: %(default)s')
+    parser.add_argument('-f', '--filter', default='default', metavar='FILTER',
+                        choices=FILTERS.keys(),
+                        help='postprocessing filter, default: %(default)s')
     parser.add_argument('--sparse', metavar='FILE',
                         help='sparse feature weights')
     parser.add_argument('--sparse-prefix', metavar='STR',

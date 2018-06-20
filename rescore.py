@@ -108,7 +108,7 @@ def parse_user_args():
     parser.add_argument('-o', '--output', metavar='FILE', nargs='?',
                         type=argparse.FileType('w'), default=sys.stdout,
                         help='output re-scored n-best list, default: STDOUT')
-    parser.add_argument('-n', '--normalize', metavar='FLOAT',
+    parser.add_argument('-n', '--normalize', metavar='FLOAT', type=float,
                         help='parameter for length normalization')
     parser.add_argument('-t', '--top-best', action='store_true',
                         help='print top best candidate')
